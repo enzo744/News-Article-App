@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,18 +7,21 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   username: z
     .string()
-    .min(2, { message: "Username deve contenere almeno 2 caratteri" }),
+    .min(2, {
+      message: "Username deve contenere almeno 2 caratteri ed essere univoco",
+    }),
   email: z.string().min({ message: "Indirizzo email non valido " }),
   password: z
     .string()
@@ -26,6 +29,10 @@ const formSchema = z.object({
 });
 
 const SignUpForm = () => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
   // 1. Define your form.
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -37,10 +44,38 @@ const SignUpForm = () => {
   });
 
   // 2. Define a submit handler.
-  function onSubmit(values) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+  async function onSubmit(values) {
+    try {
+      setLoading(true);
+      setErrorMessage(null);
+
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      const data = await res.json();
+
+      if (data.success === false) {
+        setLoading(false);
+        toast({ title: "Registrazione fallita! Riprova." });
+        return setErrorMessage(data.message);
+      }
+
+      setLoading(false);
+      if (res.ok) {
+        toast({ title: "Registrazione effettuata con successo!" });
+        navigate("/sign-in");
+      }
+    } catch (error) {
+      console.log(error);
+      setErrorMessage(error.message);
+      setLoading(false);
+      toast({ title: "Qualcosa è andato storto! Riprova" });
+    }
   }
 
   return (
@@ -67,7 +102,7 @@ const SignUpForm = () => {
         {/* right */}
         <div className="flex-1">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
               {/* -------------- Username --------------- */}
               <FormField
                 control={form.control}
@@ -119,8 +154,16 @@ const SignUpForm = () => {
                 )}
               />
               {/* -------------- Submit --------------- */}
-              <Button type="submit" className="bg-blue-500 w-full">
-                Submit
+              <Button
+                type="submit"
+                className="bg-blue-500 w-full"
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="animate-pulse">Submit</span>
+                ) : (
+                  <span>Registrati</span>
+                )}
               </Button>
             </form>
           </Form>
@@ -131,6 +174,8 @@ const SignUpForm = () => {
               Sign In
             </Link>
           </div>
+
+          {errorMessage && <p className="mt-5 text-red-500">{errorMessage}</p>}
         </div>
       </div>
     </div>
