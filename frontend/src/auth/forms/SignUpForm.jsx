@@ -95,7 +95,7 @@ const SignUpForm = () => {
           </h2>
 
           <p className="text-slate-500 text-[14px] font-medium leading-[140%] md:text-[16px] md:font-normal mt-2">
-            Welcome to Morning Dispatch, Please provide your details
+            Benvenuto in Buongiorno News. Immetti i tuoi dati.
           </p>
         </div>
 
@@ -111,7 +111,7 @@ const SignUpForm = () => {
                   <FormItem>
                     <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="Username" {...field} />
+                      <Input type="text" placeholder="Username univoco" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
